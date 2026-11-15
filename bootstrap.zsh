@@ -3,16 +3,28 @@
 set -euo pipefail
 
 usage() {
-  print "Usage: ./bootstrap.zsh [--apply]"
+  print "Usage: ./bootstrap.zsh [--apply] [--dotfiles-branch BRANCH]"
   print "Without --apply, print the recovery sequence and exit."
 }
 apply=false
-case "${1:-}" in
-  "") ;;
-  --apply) apply=true ;;
-  -h|--help) usage; exit 0 ;;
-  *) usage >&2; exit 2 ;;
-esac
+dotfiles_branch=main
+while (( $# > 0 )); do
+  case "$1" in
+    --apply) apply=true; shift ;;
+    --dotfiles-branch)
+      (( $# >= 2 )) || { usage >&2; exit 2; }
+      dotfiles_branch="$2"
+      shift 2 ;;
+    -h|--help) usage; exit 0 ;;
+    *) usage >&2; exit 2 ;;
+  esac
+done
+# Only accept a normal branch name, not flags/refspecs or shell expressions.
+if [[ ! "$dotfiles_branch" =~ '^[a-zA-Z0-9][a-zA-Z0-9._/-]*$' ]] ||
+   [[ "$dotfiles_branch" == *..* ]]; then
+  print -u2 "Invalid dotfiles branch: $dotfiles_branch"
+  exit 2
+fi
 
 [[ "$(uname -s)" == Darwin ]] || { print -u2 "ERROR: macOS is required"; exit 1; }
 arch="$(uname -m)"
@@ -20,6 +32,7 @@ arch="$(uname -m)"
 
 print "Bootstrap steps: developer tools, Homebrew, recovery keys, private GitHub repos,"
 print "password-store/age identity, chezmoi review, then Homebrew and mise packages."
+print "Selected dotfiles branch: $dotfiles_branch"
 print "Review the recovery instructions at https://github.com/mrjana/dotfiles/blob/main/README.md"
 if [[ "$apply" != true ]]; then
   print "Planning only. Re-run with --apply to make changes."
@@ -85,7 +98,7 @@ if [[ ! -s "$age_key" ]]; then
 fi
 chmod 600 "$age_key"
 
-GIT_SSH_COMMAND="ssh -i $HOME/.ssh/id_personal -o IdentitiesOnly=yes" chezmoi init --ssh mrjana
+GIT_SSH_COMMAND="ssh -i $HOME/.ssh/id_personal -o IdentitiesOnly=yes" chezmoi init --ssh --branch "$dotfiles_branch" mrjana
 print "Review the proposed changes; hooks may install software or change macOS settings."
 chezmoi diff
 read -r "answer?Apply the chezmoi configuration and run its hooks? [y/N] "
