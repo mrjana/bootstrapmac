@@ -1,0 +1,25 @@
+name: Validate macOS bootstrap
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  static-and-plan:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate script syntax
+        run: |
+          zsh -n bootstrap.zsh
+          zsh -n scripts/verify-mac.zsh
+      - name: Read-only invocation
+        run: |
+          zsh bootstrap.zsh --help
+          zsh bootstrap.zsh
+      - name: Check critical safety invariants
+        run: |
+          grep -q 'set -euo pipefail' bootstrap.zsh
+          grep -q 'chezmoi init --ssh mrjana' bootstrap.zsh
+          grep -q 'chezmoi diff' bootstrap.zsh
+          grep -q 'pass show chezmoi/age-key' bootstrap.zsh
+          ! grep -q 'chezmoi init mrjana --apply' bootstrap.zsh
