@@ -27,7 +27,7 @@ if command -v chezmoi >/dev/null 2>&1 && command -v brew >/dev/null 2>&1; then
   fi
 fi
 if command -v mise >/dev/null 2>&1; then
-  check "mise configured runtimes" mise install --dry-run
+  check "mise configured runtimes" mise install --dry-run-code
 fi
 if (( failures > 0 )); then
   print -u2 "$failures verification checks failed"
