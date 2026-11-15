@@ -16,12 +16,13 @@ jobs:
         run: |
           zsh bootstrap.zsh --help
           zsh bootstrap.zsh
+          zsh bootstrap.zsh --dotfiles-branch codex/mac-bootstrap-safety-20261114
       - name: Mocked failure-injection checks
         run: zsh tests/run-mocked.zsh
       - name: Check critical safety invariants
         run: |
           grep -q 'set -euo pipefail' bootstrap.zsh
-          grep -q 'chezmoi init --ssh mrjana' bootstrap.zsh
+          grep -q 'chezmoi init --ssh --branch' bootstrap.zsh
           grep -q 'chezmoi diff' bootstrap.zsh
           grep -q 'pass show chezmoi/age-key' bootstrap.zsh
           ! grep -q 'chezmoi init mrjana --apply' bootstrap.zsh
