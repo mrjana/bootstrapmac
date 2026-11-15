@@ -7,7 +7,7 @@ usage() {
   print "Without --apply, print the recovery sequence and exit."
 }
 apply=false
-dotfiles_branch=main
+dotfiles_branch=codex/mac-bootstrap-safety-20261114
 while (( $# > 0 )); do
   case "$1" in
     --apply) apply=true; shift ;;
@@ -33,11 +33,14 @@ arch="$(uname -m)"
 print "Bootstrap steps: developer tools, Homebrew, Codex CLI, recovery keys, private GitHub repos,"
 print "password-store/age identity, chezmoi review, then Homebrew and mise packages."
 print "Selected dotfiles branch: $dotfiles_branch"
-print "Review the recovery instructions at https://github.com/mrjana/dotfiles/blob/main/README.md"
+print "Review the recovery instructions in the selected dotfiles branch README."
 if [[ "$apply" != true ]]; then
   print "Planning only. Re-run with --apply to make changes."
   exit 0
 fi
+
+read -r "answer?Approve prerequisite installations, credential permissions, and source initialization? [y/N] "
+[[ "$answer" == [yY] ]] || exit 0
 
 if ! xcode-select -p >/dev/null 2>&1; then
   print -u2 "Apple command line developer tools are required."
@@ -119,10 +122,12 @@ if [[ "$actual_branch" != "$dotfiles_branch" ]]; then
   exit 1
 fi
 print "Review the proposed changes; hooks may install software or change macOS settings."
-chezmoi diff
-read -r "answer?Apply the chezmoi configuration and run its hooks? [y/N] "
+# Status lists paths without exposing existing secrets through a raw diff.
+# Inspect diffs only in an owner-controlled terminal, never in agent logs.
+chezmoi status
+read -r "answer?Have you reviewed the proposed files and hooks locally and approve overwrites, installations and preference changes? [y/N] "
 [[ "$answer" == [yY] ]] || { print "Changes not applied."; exit 0; }
-chezmoi apply -v
+chezmoi apply
 
 # Runtime installation is separate from installing the mise executable.
 mise install

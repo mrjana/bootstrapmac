@@ -1,0 +1,106 @@
+Mac mini bootstrap acceptance report — 2026-11-14
+Role: PERSONAL (confirmed by owner).
+Required branch: codex/mac-bootstrap-safety-20261114
+
+1 PASS — Developer tools, Homebrew, Codex, Git, gh, chezmoi, age, GPG,
+  pass, mise and bootstrap Python present. Runtime installation is criterion 8.
+2 PASS — Owner restored SSH/GPG; local secret-key check passed and SSH
+  authentication succeeded. No secret contents inspected by agent.
+3 PASS — Noninteractive access to private dotfiles review branch and
+  password-store HEAD verified. gh CLI authentication remains pending.
+4 PASS — Owner restored age identity; nonempty file and mode 600 verified.
+  Identity contents not inspected; encryption/decryption use not yet tested.
+5 PASS — Chezmoi initialized without apply; both source repositories on
+  required review branch. Bootstrap matched fetched remote at initial audit.
+6 PASS — Proposed source files and hooks inspected; path-only status checked.
+  Concrete changes documented in apply-review.txt, awaiting owner's approval.
+7 PASS — Owner approved reviewed file replacements, hooks and runtime installation;
+  staged application completed successfully. Cleanup/corporate hooks excluded.
+8 PASS — Both complete Homebrew bundles PASS. All seven mise runtimes installed,
+  version checked and tested by executing code, including C/C++ SDK compilation.
+9 PASS — Owner unlocked password-store locally. Full verify-mac.zsh rerun exited
+  0 with every check PASS, including noninteractive decryption with output
+  discarded. No decrypted output read or printed.
+  Application end-to-end validation pending installation.
+10 PASS — Second complete Chezmoi apply exited successfully with no output;
+  subsequent path-only status empty. mise install --dry-run-code exited 0,
+  reporting all tools installed. Package bundle repeat checks passed earlier.
+
+Source fixes made, uncommitted:
+- bootstrapmac: review branch default; prerequisite approval gate;
+  status-only review; no verbose application; corresponding mocked tests.
+- dotfiles: destination-path ignores for platform hooks, tests and corporate
+  personal-Mac exclusions; corporate SSH aliases and Claude sync hook work-only;
+  GPG idle cache 600 seconds and maximum 7200 seconds instead of one year.
+- dotfiles: removed obsolete homebrew/bundle tap and legacy Copilot marketplace
+  entries that attempt to downgrade VS Code's bundled Copilot Chat 0.74.0.
+  Added regression checks; full dotfiles suite passes.
+
+Checks:
+- Bootstrap syntax and mocked failure-injection/recovery rerun checks PASS.
+- Personal/work shell, hooks, SSH and GPG source rendering/syntax checks PASS.
+- Both Homebrew manifests parse with auto-update disabled.
+- Owner approved mise and python@3.13. Homebrew installed mise 2026.11.8,
+  Python 3.13.18, mpdecimal, openssl@3, sqlite and xz successfully.
+- Full dotfiles suite PASS with Python 3.13 and Homebrew auto-update disabled.
+- Verifier now checks review branches, identity permissions, personal bundle,
+  and missing mise configuration, avoiding an empty-configuration false pass.
+- No commit, push, merge, hostname change or privileged configuration applied.
+- Cleanup hook removes broken symlinks; exclude it from any initial apply
+  unless separately reviewed and explicitly approved by owner.
+
+Installation stage approved by owner, noninteractive portion completed:
+HOMEBREW_NO_AUTO_UPDATE=1 brew bundle install --file=/Users/mrjana/.local/share/chezmoi/Brewfile --no-upgrade
+HOMEBREW_NO_AUTO_UPDATE=1 brew bundle install --file=/Users/mrjana/.local/share/chezmoi/Brewfile.personal --no-upgrade
+The source manifests list all formulae, casks, Mac App Store apps and VS Code
+extensions. Includes Cursor, GPG Suite, Apple Configurator and Tailscale.
+Application installers may require administrator approval; owner handles prompts.
+No dotfile application or cleanup hook is included in this proposed stage.
+Installation failures and resolutions:
+- Obsolete homebrew/bundle tap: removed declaration in source.
+- Browserpass untrusted tap: inspected formula; trusted only the Browserpass
+  formula (not the whole tap); browserpass 3.1.0 installed.
+- Legacy Copilot extension downgrade: removed redundant marketplace entries;
+  bundled GitHub.copilot-chat 0.74.0 confirmed present.
+- Four administrator/App Store installs: require owner's local terminal.
+- Zed PowerShell completion warning: application installed and signature passes;
+  PowerShell completion integration NOT TESTED.
+
+Nine application signatures PASS outside sandbox: Alfred, Ghostty, Chrome,
+iTerm2, Ollama, VS Code, Warp, Zed, Cursor. GUI workflows NOT TESTED.
+Personal Brewfile check PASS. Shared check lists only the four local-owner items.
+No dotfiles, preference hooks, cleanup hooks, hostname changes, commits or pushes.
+
+Latest owner completion and review:
+- GitHub CLI authentication PASS with output discarded.
+- Shared and personal Brewfile checks now both PASS, including local-owner items.
+- GPG Suite installed /usr/local/bin/gpg 2.2.41, shadowing Homebrew GPG 2.5.24.
+  Verifier now selects the bootstrap's Homebrew toolchain. Secret keys confirmed;
+  running agent remains 2.2.41. Decryption error is No pinentry, requiring owner's
+  interactive unlock after matching-agent restart. No key reimport required.
+- Source gh protocol changed to SSH, cleanup hook ignored, personal corporate
+  Claude instruction document excluded, VS Code untrusted-file auto-open removed.
+- Expanded regression suite and syntax checks PASS.
+- apply-review.txt contains the complete proposed application and runtime stage.
+
+Approved configuration stage completed:
+- Owner explicitly approved apply-review.txt and runtime installations.
+- Chezmoi apply succeeded; both approved bundles satisfied during hooks.
+- Runtime versions: Node 26.13.1, Python 3.13.18, Go 1.27.4, Rust 1.100.0,
+  Temurin Java 21.0.13+9 LTS, clang 22.1.8, clang-format 22.1.8.
+- Node/Python execution; Go run; Rust compile/run; Java compile/run; clang C and
+  C++ compile/run with macOS SDK; clang-format validation all PASS.
+- Shell failures fixed in review source and reapplied: Starship only on a usable
+  interactive terminal; Homebrew initialized before shell configuration; explicit
+  mise environment for noninteractive shells. Regression suite and fresh login
+  and interactive shell runtime selection checks PASS.
+- All 22 reviewed macOS preference values and directory structure checks PASS.
+- Second apply and empty Chezmoi status PASS; all runtime installs satisfied.
+- Homebrew gpg-agent 2.5.24 restarted; only owner's local unlock remains.
+- No commit or push performed. Both source branches remain the review branch.
+
+Current acceptance totals: 10 PASS, 0 FAIL, 0 NOT TESTED for the ten acceptance
+criteria. Owner completed local unlock; final verifier exit 0, Chezmoi status
+empty with exit 0, and both review branches confirmed unchanged.
+GUI application workflows and optional system-wide Java registration NOT TESTED;
+all required tool runtime checks passed without system-wide Java symlinks.

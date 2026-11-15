@@ -25,6 +25,6 @@ jobs:
           grep -q 'brew install --cask codex' bootstrap.zsh
           zsh -n tests/run-mocked.zsh
           grep -q 'chezmoi init --ssh --branch' bootstrap.zsh
-          grep -q 'chezmoi diff' bootstrap.zsh
+          grep -q 'chezmoi status' bootstrap.zsh
           grep -q 'pass show chezmoi/age-key' bootstrap.zsh
           ! grep -q 'chezmoi init mrjana --apply' bootstrap.zsh

@@ -17,10 +17,16 @@ run_case() {
   local result=0
   local reply=n
   [[ "$scenario" == apply-failure || "$scenario" == mise-failure ]] && reply=y
-  printf '%s\n' "$reply" | HOME="$home" PATH="$home/mockbin:$PATH" BOOTSTRAP_TEST_SCENARIO="$scenario" BOOTSTRAP_TEST_TRACE="$trace" \
+  printf 'y\n%s\n' "$reply" | HOME="$home" PATH="$home/mockbin:$PATH" BOOTSTRAP_TEST_SCENARIO="$scenario" BOOTSTRAP_TEST_TRACE="$trace" \
     zsh -c '
       # All functions run within this test subshell. Actual brew shellenv is
       # invoked by bootstrap using an absolute path; it is read-only.
+      function command() {
+        if [[ "$BOOTSTRAP_TEST_SCENARIO" == "codex-install-failure" && "$*" == "-v codex" ]]; then
+          return 1
+        fi
+        builtin command "$@"
+      }
       function xcode-select() { return 0; }
       function brew() {
         print "brew:$*" >> "$BOOTSTRAP_TEST_TRACE"
@@ -39,7 +45,7 @@ run_case() {
       }
       function git() {
         print "git:$*" >> "$BOOTSTRAP_TEST_TRACE"
-        if [[ "$*" == *"branch --show-current"* ]]; then print main; return 0; fi
+        if [[ "$*" == *"branch --show-current"* ]]; then print codex/mac-bootstrap-safety-20261114; return 0; fi
         [[ "$BOOTSTRAP_TEST_SCENARIO" == "git-failure" ]] && return 1
         if [[ "$1" == clone ]]; then
           mkdir -p "$HOME/.password-store/.git"
@@ -53,7 +59,7 @@ run_case() {
       }
       function chezmoi() {
         print "chezmoi:$*" >> "$BOOTSTRAP_TEST_TRACE"
-        if [[ "$BOOTSTRAP_TEST_SCENARIO" == "diff-failure" && "$1" == "diff" ]]; then return 1; fi
+        if [[ "$BOOTSTRAP_TEST_SCENARIO" == "diff-failure" && "$1" == "status" ]]; then return 1; fi
         if [[ "$BOOTSTRAP_TEST_SCENARIO" == "apply-failure" && "$1" == "apply" ]]; then return 1; fi
         return 0
       }
@@ -125,7 +131,7 @@ mock_driver() {
     function gpg() { print "sec:synthetic"; }
     function git() {
       print "git:$*" >> "$BOOTSTRAP_TEST_TRACE"
-      if [[ "$*" == *"branch --show-current"* ]]; then print main; return 0; fi
+      if [[ "$*" == *"branch --show-current"* ]]; then print codex/mac-bootstrap-safety-20261114; return 0; fi
       if [[ "$1" == clone ]]; then mkdir -p "$HOME/.password-store/.git"; fi
     }
     function pass() {
@@ -135,7 +141,7 @@ mock_driver() {
     function chezmoi() { print "chezmoi:$*" >> "$BOOTSTRAP_TEST_TRACE"; }
     function mise() { print "mise:$*" >> "$BOOTSTRAP_TEST_TRACE"; }
     source ./bootstrap.zsh --apply
-  ' <<< 'y'
+  ' <<< $'y\ny'
 }
 mock_driver "$test_home" > "$test_home/first.out" 2>&1 || {
   print -u2 "FAIL: mocked successful bootstrap"; tail -n 12 "$test_home/first.out" >&2; (( failures += 1 ))
