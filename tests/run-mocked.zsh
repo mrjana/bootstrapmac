@@ -10,21 +10,27 @@ failures=0
 run_case() {
   local scenario="$1" expected="$2"
   local home="$runner/$scenario"
-  mkdir -p "$home/.ssh"
+  mkdir -p "$home/.ssh" "$home/mockbin"
   print 'synthetic-key-do-not-use' > "$home/.ssh/id_personal"
   local trace="$home/trace"
   : > "$trace"
   local result=0
   local reply=n
   [[ "$scenario" == apply-failure || "$scenario" == mise-failure ]] && reply=y
-  printf '%s\n' "$reply" | HOME="$home" BOOTSTRAP_TEST_SCENARIO="$scenario" BOOTSTRAP_TEST_TRACE="$trace" \
+  printf '%s\n' "$reply" | HOME="$home" PATH="$home/mockbin:$PATH" BOOTSTRAP_TEST_SCENARIO="$scenario" BOOTSTRAP_TEST_TRACE="$trace" \
     zsh -c '
       # All functions run within this test subshell. Actual brew shellenv is
       # invoked by bootstrap using an absolute path; it is read-only.
       function xcode-select() { return 0; }
       function brew() {
         print "brew:$*" >> "$BOOTSTRAP_TEST_TRACE"
-        [[ "$BOOTSTRAP_TEST_SCENARIO" != "brew-failure" ]]
+        [[ "$BOOTSTRAP_TEST_SCENARIO" == "brew-failure" ]] && return 1
+        if [[ "$*" == "install --cask codex" ]]; then
+          [[ "$BOOTSTRAP_TEST_SCENARIO" == "codex-install-failure" ]] && return 1
+          print '#!/bin/sh' 'echo codex-test-version' > "$HOME/mockbin/codex"
+          chmod +x "$HOME/mockbin/codex"
+        fi
+        return 0
       }
       function gpg() {
         print "gpg:$*" >> "$BOOTSTRAP_TEST_TRACE"
@@ -87,6 +93,7 @@ run_case() {
   fi
 }
 run_case brew-failure failure
+run_case codex-install-failure failure
 run_case gpg-failure failure
 run_case git-failure failure
 run_case pass-failure failure
@@ -99,14 +106,21 @@ run_case user-declines success
 # Happy path, then repeat against the same isolated home. The second execution
 # must not re-clone the password store or re-decrypt/write the age key.
 test_home="$runner/repeat"
-mkdir -p "$test_home/.ssh"
+mkdir -p "$test_home/.ssh" "$test_home/mockbin"
 print 'synthetic-key-do-not-use' > "$test_home/.ssh/id_personal"
 : > "$test_home/trace"
 mock_driver() {
   local home="$1"
-  HOME="$home" BOOTSTRAP_TEST_TRACE="$home/trace" zsh -c '
+  HOME="$home" PATH="$home/mockbin:$PATH" BOOTSTRAP_TEST_TRACE="$home/trace" zsh -c '
     function xcode-select() { return 0; }
-    function brew() { print "brew:$*" >> "$BOOTSTRAP_TEST_TRACE"; return 0; }
+    function brew() {
+      print "brew:$*" >> "$BOOTSTRAP_TEST_TRACE"
+      if [[ "$*" == "install --cask codex" ]]; then
+        print '#!/bin/sh' 'echo codex-test-version' > "$HOME/mockbin/codex"
+        chmod +x "$HOME/mockbin/codex"
+      fi
+      return 0
+    }
     function gpg() { print "sec:synthetic"; }
     function git() {
       print "git:$*" >> "$BOOTSTRAP_TEST_TRACE"
@@ -132,7 +146,7 @@ fi
 mock_driver "$test_home" > "$test_home/second.out" 2>&1 || {
   print -u2 "FAIL: mocked second bootstrap"; (( failures += 1 ))
 }
-if grep -Eq '^(pass:|git:clone)' "$test_home/trace"; then
+if grep -Eq '^(pass:|git:clone|brew:install --cask codex)' "$test_home/trace"; then
   print -u2 "FAIL: repeated recovery or clone on rerun"; (( failures += 1 ))
 else
   print "PASS: mocked safe rerun skips recovered credentials"
