@@ -13,9 +13,10 @@ check() {
   fi
 }
 [[ "$(uname -s)" == Darwin ]] || { print -u2 "Only macOS is supported"; exit 1; }
-for cmd in brew git gh chezmoi age gpg pass mise zsh; do
+for cmd in brew codex git gh chezmoi age gpg pass mise zsh; do
   check "Executable: $cmd" command -v "$cmd"
 done
+check "Codex CLI starts" codex --version
 check "GitHub CLI authentication" gh auth status
 check "GPG secret key exists" zsh -c 'gpg --list-secret-keys --with-colons 2>/dev/null | grep -q "^sec:"'
 check "Password store can decrypt Chezmoi key" zsh -c 'PASSWORD_STORE_GPG_OPTS="--batch --no-tty --pinentry-mode error" pass show chezmoi/age-key >/dev/null 2>&1'
