@@ -15,7 +15,9 @@ run_case() {
   local trace="$home/trace"
   : > "$trace"
   local result=0
-  printf 'n\n' | HOME="$home" BOOTSTRAP_TEST_SCENARIO="$scenario" BOOTSTRAP_TEST_TRACE="$trace" \
+  local reply=n
+  [[ "$scenario" == apply-failure || "$scenario" == mise-failure ]] && reply=y
+  printf '%s\n' "$reply" | HOME="$home" BOOTSTRAP_TEST_SCENARIO="$scenario" BOOTSTRAP_TEST_TRACE="$trace" \
     zsh -c '
       # All functions run within this test subshell. Actual brew shellenv is
       # invoked by bootstrap using an absolute path; it is read-only.
@@ -44,9 +46,14 @@ run_case() {
       }
       function chezmoi() {
         print "chezmoi:$*" >> "$BOOTSTRAP_TEST_TRACE"
-        [[ "$BOOTSTRAP_TEST_SCENARIO" != "diff-failure" || "$1" != "diff" ]]
+        if [[ "$BOOTSTRAP_TEST_SCENARIO" == "diff-failure" && "$1" == "diff" ]]; then return 1; fi
+        if [[ "$BOOTSTRAP_TEST_SCENARIO" == "apply-failure" && "$1" == "apply" ]]; then return 1; fi
+        return 0
       }
-      function mise() { print "mise:$*" >> "$BOOTSTRAP_TEST_TRACE"; }
+      function mise() {
+        print "mise:$*" >> "$BOOTSTRAP_TEST_TRACE"
+        [[ "$BOOTSTRAP_TEST_SCENARIO" != "mise-failure" ]]
+      }
       source ./bootstrap.zsh --apply
     ' > "$home/output" 2>&1 || result=$?
   if [[ "$expected" == failure && "$result" == 0 ]] ||
@@ -56,7 +63,7 @@ run_case() {
   else
     print "PASS: $scenario (rc=$result)"
   fi
-  if [[ "$scenario" != "diff-failure" ]] && grep -q '^mise:' "$trace"; then
+  if [[ "$scenario" != "mise-failure" ]] && grep -q '^mise:' "$trace"; then
     print -u2 "FAIL: $scenario unexpectedly installed runtimes"
     (( failures += 1 ))
   fi
@@ -66,6 +73,10 @@ run_case() {
   fi
   if [[ "$scenario" == "brew-failure" ]] && grep -q '^chezmoi:' "$trace"; then
     print -u2 "FAIL: failed brew continued to chezmoi"
+    (( failures += 1 ))
+  fi
+  if [[ "$expected" == failure ]] && grep -q 'Bootstrap completed' "$home/output"; then
+    print -u2 "FAIL: $scenario reported success despite an injected failure"
     (( failures += 1 ))
   fi
   # No secret or the synthetic token should appear in output.
@@ -79,6 +90,8 @@ run_case gpg-failure failure
 run_case git-failure failure
 run_case pass-failure failure
 run_case diff-failure failure
+run_case apply-failure failure
+run_case mise-failure failure
 run_case user-declines success
 
 
