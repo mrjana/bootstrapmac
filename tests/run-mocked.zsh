@@ -27,7 +27,7 @@ run_case() {
         [[ "$BOOTSTRAP_TEST_SCENARIO" == "brew-failure" ]] && return 1
         if [[ "$*" == "install --cask codex" ]]; then
           [[ "$BOOTSTRAP_TEST_SCENARIO" == "codex-install-failure" ]] && return 1
-          printf '#!/bin/sh\necho codex-test-version\n' > "$HOME/mockbin/codex"
+          printf "#!/bin/sh\necho codex-test-version\n" > "$HOME/mockbin/codex"
           chmod +x "$HOME/mockbin/codex"
         fi
         return 0
@@ -117,7 +117,7 @@ mock_driver() {
     function brew() {
       print "brew:$*" >> "$BOOTSTRAP_TEST_TRACE"
       if [[ "$*" == "install --cask codex" ]]; then
-        printf '#!/bin/sh\necho codex-test-version\n' > "$HOME/mockbin/codex"
+        printf "#!/bin/sh\necho codex-test-version\n" > "$HOME/mockbin/codex"
         chmod +x "$HOME/mockbin/codex"
       fi
       return 0
