@@ -66,6 +66,7 @@ run_case() {
   if [[ "$expected" == failure && "$result" == 0 ]] ||
      [[ "$expected" == success && "$result" != 0 ]]; then
     print -u2 "FAIL: $scenario expected $expected, rc=$result"
+    sed -E "s/AGE-SECRET-KEY-[A-Z0-9-]+/[REDACTED]/g" "$home/output" | tail -n 12 >&2
     (( failures += 1 ))
   else
     print "PASS: $scenario (rc=$result)"
@@ -137,7 +138,7 @@ mock_driver() {
   ' <<< 'y'
 }
 mock_driver "$test_home" > "$test_home/first.out" 2>&1 || {
-  print -u2 "FAIL: mocked successful bootstrap"; (( failures += 1 ))
+  print -u2 "FAIL: mocked successful bootstrap"; tail -n 12 "$test_home/first.out" >&2; (( failures += 1 ))
 }
 if [[ ! -s "$test_home/.config/chezmoi/key.txt" ]]; then
   print -u2 "FAIL: missing recovered age key"; (( failures += 1 ))
