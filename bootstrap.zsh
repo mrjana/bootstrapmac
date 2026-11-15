@@ -85,7 +85,7 @@ if [[ ! -s "$age_key" ]]; then
 fi
 chmod 600 "$age_key"
 
-chezmoi init --ssh mrjana
+GIT_SSH_COMMAND="ssh -i $HOME/.ssh/id_personal -o IdentitiesOnly=yes" chezmoi init --ssh mrjana
 print "Review the proposed changes; hooks may install software or change macOS settings."
 chezmoi diff
 read -r "answer?Apply the chezmoi configuration and run its hooks? [y/N] "
