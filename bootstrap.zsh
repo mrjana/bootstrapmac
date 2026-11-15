@@ -99,6 +99,13 @@ fi
 chmod 600 "$age_key"
 
 GIT_SSH_COMMAND="ssh -i $HOME/.ssh/id_personal -o IdentitiesOnly=yes" chezmoi init --ssh --branch "$dotfiles_branch" mrjana
+source_dir="$(chezmoi source-path)"
+actual_branch="$(git -C "$source_dir" branch --show-current)"
+if [[ "$actual_branch" != "$dotfiles_branch" ]]; then
+  print -u2 "ERROR: Chezmoi source is on '$actual_branch', not '$dotfiles_branch'."
+  print -u2 "Inspect the repository at $source_dir and switch to the intended branch before proceeding."
+  exit 1
+fi
 print "Review the proposed changes; hooks may install software or change macOS settings."
 chezmoi diff
 read -r "answer?Apply the chezmoi configuration and run its hooks? [y/N] "
