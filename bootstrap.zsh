@@ -30,7 +30,7 @@ fi
 arch="$(uname -m)"
 [[ "$arch" == arm64 || "$arch" == x86_64 ]] || { print -u2 "ERROR: unsupported architecture: $arch"; exit 1; }
 
-print "Bootstrap steps: developer tools, Homebrew, recovery keys, private GitHub repos,"
+print "Bootstrap steps: developer tools, Homebrew, Codex CLI, recovery keys, private GitHub repos,"
 print "password-store/age identity, chezmoi review, then Homebrew and mise packages."
 print "Selected dotfiles branch: $dotfiles_branch"
 print "Review the recovery instructions at https://github.com/mrjana/dotfiles/blob/main/README.md"
@@ -56,6 +56,18 @@ if [[ ! -x "$brew_prefix/bin/brew" ]]; then
 fi
 [[ -x "$brew_prefix/bin/brew" ]] || { print -u2 "ERROR: Homebrew not found"; exit 1; }
 eval "$("$brew_prefix/bin/brew" shellenv)"
+
+# Stage 0: get the local AI troubleshooting agent available before private
+# credentials or dotfiles are required. Never launch it automatically.
+if ! command -v codex >/dev/null 2>&1; then
+  print "Installing Codex CLI for interactive bootstrap troubleshooting..."
+  brew install --cask codex
+fi
+if ! command -v codex >/dev/null 2>&1 || ! codex --version >/dev/null 2>&1; then
+  print -u2 "ERROR: Codex CLI is not usable after installation."
+  exit 1
+fi
+print "Codex CLI is ready. Run 'codex' in a separate terminal to sign in and diagnose setup failures."
 
 # Essentials needed BEFORE chezmoi can render templates or run hooks.
 brew install age gnupg pass chezmoi git gh
