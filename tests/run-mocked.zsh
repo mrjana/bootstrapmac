@@ -31,7 +31,11 @@ run_case() {
       }
       function git() {
         print "git:$*" >> "$BOOTSTRAP_TEST_TRACE"
-        [[ "$BOOTSTRAP_TEST_SCENARIO" != "git-failure" ]]
+        [[ "$BOOTSTRAP_TEST_SCENARIO" == "git-failure" ]] && return 1
+        if [[ "$1" == clone ]]; then
+          mkdir -p "$HOME/.password-store/.git"
+        fi
+        return 0
       }
       function pass() {
         print "pass:$*" >> "$BOOTSTRAP_TEST_TRACE"
@@ -76,6 +80,51 @@ run_case git-failure failure
 run_case pass-failure failure
 run_case diff-failure failure
 run_case user-declines success
+
+
+# Happy path, then repeat against the same isolated home. The second execution
+# must not re-clone the password store or re-decrypt/write the age key.
+test_home="$runner/repeat"
+mkdir -p "$test_home/.ssh"
+print 'synthetic-key-do-not-use' > "$test_home/.ssh/id_personal"
+: > "$test_home/trace"
+mock_driver() {
+  local home="$1"
+  HOME="$home" BOOTSTRAP_TEST_TRACE="$home/trace" zsh -c '
+    function xcode-select() { return 0; }
+    function brew() { print "brew:$*" >> "$BOOTSTRAP_TEST_TRACE"; return 0; }
+    function gpg() { print "sec:synthetic"; }
+    function git() {
+      print "git:$*" >> "$BOOTSTRAP_TEST_TRACE"
+      if [[ "$1" == clone ]]; then mkdir -p "$HOME/.password-store/.git"; fi
+    }
+    function pass() {
+      print "pass:$*" >> "$BOOTSTRAP_TEST_TRACE"
+      print "AGE-SECRET-KEY-SYNTHETIC-TEST-NOT-VALID"
+    }
+    function chezmoi() { print "chezmoi:$*" >> "$BOOTSTRAP_TEST_TRACE"; }
+    function mise() { print "mise:$*" >> "$BOOTSTRAP_TEST_TRACE"; }
+    source ./bootstrap.zsh --apply
+  ' <<< 'y'
+}
+mock_driver "$test_home" > "$test_home/first.out" 2>&1 || {
+  print -u2 "FAIL: mocked successful bootstrap"; (( failures += 1 ))
+}
+if [[ ! -s "$test_home/.config/chezmoi/key.txt" ]]; then
+  print -u2 "FAIL: missing recovered age key"; (( failures += 1 ))
+fi
+: > "$test_home/trace"
+mock_driver "$test_home" > "$test_home/second.out" 2>&1 || {
+  print -u2 "FAIL: mocked second bootstrap"; (( failures += 1 ))
+}
+if grep -Eq '^(pass:|git:clone)' "$test_home/trace"; then
+  print -u2 "FAIL: repeated recovery or clone on rerun"; (( failures += 1 ))
+else
+  print "PASS: mocked safe rerun skips recovered credentials"
+fi
+if grep -q 'AGE-SECRET-KEY-SYNTHETIC' "$test_home/first.out" "$test_home/second.out"; then
+  print -u2 "FAIL: secret exposed to stdout"; (( failures += 1 ))
+fi
 
 if (( failures )); then
   print -u2 "$failures cases failed"
