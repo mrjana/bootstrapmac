@@ -33,6 +33,7 @@ run_case() {
       }
       function git() {
         print "git:$*" >> "$BOOTSTRAP_TEST_TRACE"
+        if [[ "$*" == *"branch --show-current"* ]]; then print main; return 0; fi
         [[ "$BOOTSTRAP_TEST_SCENARIO" == "git-failure" ]] && return 1
         if [[ "$1" == clone ]]; then
           mkdir -p "$HOME/.password-store/.git"
@@ -109,6 +110,7 @@ mock_driver() {
     function gpg() { print "sec:synthetic"; }
     function git() {
       print "git:$*" >> "$BOOTSTRAP_TEST_TRACE"
+      if [[ "$*" == *"branch --show-current"* ]]; then print main; return 0; fi
       if [[ "$1" == clone ]]; then mkdir -p "$HOME/.password-store/.git"; fi
     }
     function pass() {
