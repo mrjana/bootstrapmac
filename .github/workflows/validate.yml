@@ -16,6 +16,8 @@ jobs:
         run: |
           zsh bootstrap.zsh --help
           zsh bootstrap.zsh
+      - name: Mocked failure-injection checks
+        run: zsh tests/run-mocked.zsh
       - name: Check critical safety invariants
         run: |
           grep -q 'set -euo pipefail' bootstrap.zsh
