@@ -53,6 +53,8 @@ run_case() {
         return 0
       }
       function pass() {
+        [[ "$(readlink "$HOME/.local/libexec/pass-gpg/gpg2")" == /opt/homebrew/bin/gpg || "$(readlink "$HOME/.local/libexec/pass-gpg/gpg2")" == /usr/local/bin/gpg ]] || return 91
+        [[ "$(builtin command -v gpg2)" == "$HOME/.local/libexec/pass-gpg/gpg2" ]] || return 92
         print "pass:$*" >> "$BOOTSTRAP_TEST_TRACE"
         [[ "$BOOTSTRAP_TEST_SCENARIO" == "pass-failure" ]] && return 1
         print "AGE-SECRET-KEY-SYNTHETIC-TEST-NOT-VALID"
@@ -135,6 +137,8 @@ mock_driver() {
       if [[ "$1" == clone ]]; then mkdir -p "$HOME/.password-store/.git"; fi
     }
     function pass() {
+        [[ "$(readlink "$HOME/.local/libexec/pass-gpg/gpg2")" == /opt/homebrew/bin/gpg || "$(readlink "$HOME/.local/libexec/pass-gpg/gpg2")" == /usr/local/bin/gpg ]] || return 91
+        [[ "$(builtin command -v gpg2)" == "$HOME/.local/libexec/pass-gpg/gpg2" ]] || return 92
       print "pass:$*" >> "$BOOTSTRAP_TEST_TRACE"
       print "AGE-SECRET-KEY-SYNTHETIC-TEST-NOT-VALID"
     }

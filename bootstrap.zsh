@@ -75,6 +75,14 @@ print "Codex CLI is ready. Run 'codex' in a separate terminal to sign in and dia
 # Essentials needed BEFORE chezmoi can render templates or run hooks.
 brew install age gnupg pass chezmoi git gh
 
+# pass selects gpg2 if present. Install the same link Chezmoi will manage,
+# before recovering the age identity (Chezmoi cannot manage it yet).
+[[ -x "$brew_prefix/bin/gpg" ]] || { print -u2 "ERROR: Homebrew GPG is missing"; exit 1; }
+mkdir -p "$HOME/.local/libexec/pass-gpg"
+ln -sfn "$brew_prefix/bin/gpg" "$HOME/.local/libexec/pass-gpg/gpg2"
+export PATH="$HOME/.local/libexec/pass-gpg:$PATH"
+rehash
+
 if [[ ! -f "$HOME/.ssh/id_personal" ]]; then
   print -u2 "ERROR: restore ~/.ssh/id_personal from the age-encrypted iCloud backup first."
   print -u2 "See dotfiles README, 'Restore keys from iCloud Drive'."

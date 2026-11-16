@@ -54,3 +54,20 @@ and package/runtime state but cannot independently certify personal application 
 - For a personal machine, choose an account name other than `jradhakr`, or adjust
   the work-account conditional in dotfiles before applying; the legacy dotfiles
   currently use this username to distinguish corporate configuration.
+
+### password-store GPG selection
+
+`pass` prefers `gpg2` over `gpg`. A scoped compatibility link at
+`~/.local/libexec/pass-gpg/gpg2` selects Homebrew GPG (verified with 2.5.24),
+using `/opt/homebrew/bin/gpg` on Apple Silicon or `/usr/local/bin/gpg` on Intel.
+Homebrew upgrades remain supported; the version is not pinned. GPG Suite can
+remain installed. Chezmoi owns the link and zsh PATH initialization, including
+noninteractive `zsh -c` and login shells. Bootstrap creates it before age-key
+recovery. Other shell callers should explicitly prepend this directory to PATH.
+
+After applying both review branches, run `zsh scripts/verify-mac.zsh` from
+bootstrapmac. A failed noninteractive decrypt can also mean the agent needs
+interactive unlocking; it does not alone prove a missing key. Never print the
+age entry or run secret-bearing commands with shell tracing. Diagnose package
+requirements with `brew bundle check --file="$(chezmoi source-path)/Brewfile" --verbose`
+and repeat for `Brewfile.personal` on a personal account.
