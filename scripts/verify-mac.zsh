@@ -26,7 +26,13 @@ check "GitHub CLI authentication" gh auth status
 check "GPG secret key exists" zsh -c 'gpg --list-secret-keys --with-colons 2>/dev/null | grep -q "^sec:"'
 check "Password store can decrypt Chezmoi key" zsh -c 'PASSWORD_STORE_GPG_OPTS="--batch --no-tty --pinentry-mode error" pass show chezmoi/age-key >/dev/null 2>&1'
 check "Chezmoi health" chezmoi doctor
-expected_branch=codex/mac-bootstrap-safety-20261114
+# A review-branch bootstrap expects the matching dotfiles branch; after merge,
+# main expects main. Never silently accept a detached source checkout.
+expected_branch="$(git -C "${0:A:h:h}" branch --show-current 2>/dev/null)"
+if [[ -z "$expected_branch" ]]; then
+  print -u2 "FAIL: bootstrap source is detached or unavailable"
+  (( failures += 1 ))
+fi
 check "Bootstrap review branch" zsh -c '[[ "$(git -C "$1" branch --show-current)" == "$2" ]]' -- "${0:A:h:h}" "$expected_branch"
 check "Chezmoi age identity permissions" zsh -c '[[ -s "$HOME/.config/chezmoi/key.txt" && "$(stat -f %Lp "$HOME/.config/chezmoi/key.txt")" == 600 ]]'
 if command -v chezmoi >/dev/null 2>&1 && command -v brew >/dev/null 2>&1; then
