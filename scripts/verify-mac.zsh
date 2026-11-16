@@ -18,6 +18,10 @@ check() {
 brew_prefix=/usr/local
 [[ "$(uname -m)" == arm64 ]] && brew_prefix=/opt/homebrew
 export PATH="$brew_prefix/bin:$brew_prefix/sbin:$PATH"
+# Do not create or repair the link here: verification must detect bad deployment.
+export PATH="$HOME/.local/libexec/pass-gpg:$PATH"
+check "Managed gpg2 targets Homebrew GPG" zsh -c '[[ -x "$1/bin/gpg" && -L "$HOME/.local/libexec/pass-gpg/gpg2" && "$(readlink "$HOME/.local/libexec/pass-gpg/gpg2")" == "$1/bin/gpg" && "$(command -v gpg2)" == "$HOME/.local/libexec/pass-gpg/gpg2" ]]' -- "$brew_prefix"
+check "Homebrew GPG starts" "$brew_prefix/bin/gpg" --version
 for cmd in brew codex git gh chezmoi age gpg pass mise zsh; do
   check "Executable: $cmd" command -v "$cmd"
 done
@@ -41,6 +45,7 @@ if command -v chezmoi >/dev/null 2>&1 && command -v brew >/dev/null 2>&1; then
   check "Brewfile exists" test -f "$source_dir/Brewfile"
   if [[ -n "$source_dir" && -f "$source_dir/Brewfile" ]]; then
     check "Brewfile requirements" brew bundle check --file="$source_dir/Brewfile"
+    print "For missing package details: brew bundle check --file=\"$source_dir/Brewfile\" --verbose"
     if [[ "$(id -un)" != jradhakr ]]; then
       check "Personal Brewfile exists" test -f "$source_dir/Brewfile.personal"
       check "Personal Brewfile requirements" brew bundle check --file="$source_dir/Brewfile.personal"
