@@ -25,14 +25,14 @@ zsh bootstrap.zsh             # review plan, no modifications
 zsh bootstrap.zsh --apply     # staged installation and an approval gate
 ```
 
-The apply command (select `--dotfiles-branch codex/mac-bootstrap-safety-20261114` to test the unmerged review branch):
+The apply command (use `--dotfiles-branch <branch>` to test an unmerged review branch):
 1. Installs Homebrew if necessary (asks for permission).
 2. Installs and verifies Codex CLI before private credentials are needed. Open a separate terminal and run `codex` to sign in when desired.
 3. Installs age, GPG, pass, git, gh and chezmoi.
 4. Verifies restored SSH/GPG keys and private GitHub repository access.
 5. Clones password-store using a direct GitHub SSH URL if absent.
 6. Restores the Chezmoi age identity from pass with restrictive permissions.
-7. Initializes Chezmoi via SSH, shows `chezmoi diff`, and requests approval.
+7. Initializes Chezmoi via SSH, shows a path-only `chezmoi status`, and requests approval; review sensitive diffs locally.
 8. Applies dotfiles/hooks, installs mise runtimes and runs `chezmoi doctor`.
 
 ```zsh
