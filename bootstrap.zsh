@@ -7,7 +7,7 @@ usage() {
   print "Without --apply, print the recovery sequence and exit."
 }
 apply=false
-dotfiles_branch=codex/mac-bootstrap-safety-20261114
+dotfiles_branch=main
 while (( $# > 0 )); do
   case "$1" in
     --apply) apply=true; shift ;;
